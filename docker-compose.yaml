@@ -1,0 +1,54 @@
+version: '3.9'
+
+services:
+  mysql:
+    image: mysql:8
+
+    ports:
+      - 3306:3306
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_USER=user
+      - MYSQL_DATABASE=photoapp
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ./data/rabbitmq:/var/lib/rabbitmq
+    networks:
+        - rabbitmq_go_net
+  zipkin:
+    image: openzipkin/zipkin
+    ports: 
+        - 9411:9411
+  elasticsearch:
+    image: elasticsearch:2.3.3
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - ./data/es:/usr/share/elasticsearch/data
+  kibana:
+    image: kibana:4.5.1
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+  logstash:
+    image: logstash:2.3.2
+    command: logstash -f /etc/logstash/conf.d/logstash.conf
+    volumes:
+      - ./data/logstash/logtash.conf:/etc/logstash/conf.d
+      - ./data/logs:/usr/share/logstash/logs
+    depends_on:
+      - elasticsearch
+networks:
+  rabbitmq_go_net:
+    driver: bridge
+                    
